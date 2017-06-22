@@ -1,5 +1,5 @@
 
-package smp_server;
+package smp_client;
 
 import java.io.*;
 import java.math.BigInteger;

@@ -17,9 +17,10 @@ public class MessageParser {
         COMMAND("COMMAND"),
         PUBLIC_KEY("PUBLIC_KEY"),
         USER_PUBLIC_KEY("USER_PUBLIC_KEY"),
+        DH_PUBLIC_KEY("DH_PUBLIC_KEY"),
         ID("ID"),
         EXIT("EXIT"),
-        AES_KEY("AES_KEY"),
+        TEST_AES("TEST_AES"),
         CHECK_RANGE("CHECK_RANGE"),
         P("P"),
         G("G"),
@@ -83,10 +84,14 @@ public class MessageParser {
     
     
     public String GenerateMsg(){
-        if(t == TYPE.MESSAGE || t == TYPE.MESSAGE_P){
+        if(t == TYPE.MESSAGE || t == TYPE.MESSAGE_P || t == TYPE.DH_PUBLIC_KEY || t == TYPE.TEST_AES){
             return t.toString()+";"
                    +sender+";"
                    +reciver+";"
+                   +msg;
+        }else if(t == TYPE.USER_PUBLIC_KEY){
+            return t.toString()+";"
+                   +sender+";"
                    +msg;
         }
         return t.toString()+";"+msg;
@@ -119,7 +124,13 @@ public class MessageParser {
                     t = TYPE.PUBLIC_KEY;
                     break;
                 case "USER_PUBLIC_KEY":
+                    sender=tab[++i];
                     t = TYPE.USER_PUBLIC_KEY;
+                    break;
+                case "DH_PUBLIC_KEY":
+                    sender=tab[++i];
+                    reciver = tab[++i];
+                    t = TYPE.DH_PUBLIC_KEY;
                     break;
                 case "ID":
                     t = TYPE.ID;
@@ -127,8 +138,10 @@ public class MessageParser {
                 case "EXIT":
                     t = TYPE.EXIT;
                     break;
-                case "AES_KEY":
-                    t = TYPE.AES_KEY;
+                case "TEST_AES":
+                    sender=tab[++i];
+                    reciver = tab[++i];
+                    t = TYPE.TEST_AES;
                     break;
                 case "CHECK_RANGE":
                     t = TYPE.CHECK_RANGE;

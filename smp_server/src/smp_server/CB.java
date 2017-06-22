@@ -1,3 +1,6 @@
+
+package smp_server;
+
 import java.io.*;
 
 public class CB

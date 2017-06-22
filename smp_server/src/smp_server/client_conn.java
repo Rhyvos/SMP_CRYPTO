@@ -100,6 +100,17 @@ public class client_conn extends Thread {
                                 send(mp.GenerateMsg());
                             }
                             break;
+                        case DH_PUBLIC_KEY:
+                            String dh_name = mp.getReciver();
+                            int dh_id = event.find_user(dh_name);
+                            if(dh_id >= 0){
+                                event.send_to_user(dh_id, msg);
+                            }else{
+                                mp.setType(MessageParser.TYPE.ERROR);
+                                mp.setMsg("User not found:"+dh_name);
+                                send(mp.GenerateMsg());
+                            }
+                            break;
                         case COMMAND:
                             break;
                         case PUBLIC_KEY:
@@ -110,10 +121,11 @@ public class client_conn extends Thread {
                             int cr_id = event.find_user(cr_name);
                             if(cr_id >= 0){
                                 mp.setType(MessageParser.TYPE.USER_PUBLIC_KEY);
+                                mp.setSender(name);
                                 mp.setMsg(pub_key);
                                 event.send_to_user(cr_id, mp.GenerateMsg());
-                                mp.setMsg(event.get_user_pub_key(cr_id));
-                                send(mp.GenerateMsg());
+                                //mp.setMsg(event.get_user_pub_key(cr_id));
+                                //send(mp.GenerateMsg());
                             } else{
                                 mp.setType(MessageParser.TYPE.ERROR);
                                 mp.setMsg("User not found:"+cr_id);
