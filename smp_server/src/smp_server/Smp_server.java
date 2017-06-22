@@ -103,5 +103,36 @@ public class Smp_server extends Thread implements Events{
             if(client_list.get(i).get_id() == id)
                 client_list.remove(i);
     }
+
+    @Override
+    public boolean send_to_user(int id, String msg) {
+        for(int i =0 ;i<client_list.size();i++)
+            if(client_list.get(i).get_id() == id)
+            {
+                client_list.get(i).send(msg);
+                return true;
+            }
+        return false;
+    }
+
+    @Override
+    public int find_user(String name) {
+        for(int i =0 ;i<client_list.size();i++)
+            if(client_list.get(i).get_name().compareTo(name)==0)
+            {
+                return client_list.get(i).get_id();
+            }
+        return -1;
+    }
+
+    @Override
+    public String get_user_pub_key(int id) {
+        for(int i =0 ;i<client_list.size();i++)
+            if(client_list.get(i).get_id() == id)
+            {
+                return client_list.get(i).get_pub_key();
+            }
+        return "";
+    }
     
 }

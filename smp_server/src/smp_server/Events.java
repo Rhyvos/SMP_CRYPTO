@@ -11,4 +11,7 @@ package smp_server;
  */
 public interface Events {
     void exit(int id);
+    boolean send_to_user(int id,String msg);
+    int find_user(String name);
+    String get_user_pub_key(int id);
 }

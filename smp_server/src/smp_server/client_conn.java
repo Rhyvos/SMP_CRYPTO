@@ -31,15 +31,22 @@ public class client_conn extends Thread {
     private DataOutputStream out;
     private BlockingQueue<String> msg_queue;
     private Events event;
+    private String name;
+    private MessageParser mp;
+    private String pub_key;
     public client_conn(Socket s, Events e)
     {   
         try {
+            pub_key = "not defined";
             event = e;
             id = conn_count;
             conn_count ++;
             this.s=s;
             msg_queue = new ArrayBlockingQueue<String>(10);
-            msg_queue.put("id="+id);
+            mp = new MessageParser();
+            mp.setMsg(Integer.toString(id));
+            mp.setType(MessageParser.TYPE.ID);
+            msg_queue.put(mp.GenerateMsg());
             open = true;
             try {
                 in = new DataInputStream(s.getInputStream());
@@ -74,8 +81,80 @@ public class client_conn extends Thread {
                     event.exit(id);
                 }
                 if(in.available()>0){
-                    System.out.println("from Clien["+id+"]:"+in.readUTF());
-                    /* TO DO */
+                    String msg = in.readUTF();
+                    System.out.println("from Clien["+id+"]:"+msg);
+                    mp.ParseMessage(msg);
+                    switch(mp.what())
+                    {
+                        case NAME:
+                            name = mp.getMsg();
+                            break;
+                        case MESSAGE:
+                            String dest_name = mp.getReciver();
+                            int dest_id = event.find_user(dest_name);
+                            if(dest_id >= 0)
+                                event.send_to_user(dest_id, msg);
+                            else{
+                                mp.setType(MessageParser.TYPE.ERROR);
+                                mp.setMsg("User not found:"+dest_name);
+                                send(mp.GenerateMsg());
+                            }
+                            break;
+                        case COMMAND:
+                            break;
+                        case PUBLIC_KEY:
+                            pub_key = mp.getMsg();
+                            break;
+                        case CHECK_RANGE:
+                            String cr_name = mp.getMsg();
+                            int cr_id = event.find_user(cr_name);
+                            if(cr_id >= 0){
+                                mp.setType(MessageParser.TYPE.USER_PUBLIC_KEY);
+                                mp.setMsg(pub_key);
+                                event.send_to_user(cr_id, mp.GenerateMsg());
+                                mp.setMsg(event.get_user_pub_key(cr_id));
+                                send(mp.GenerateMsg());
+                            } else{
+                                mp.setType(MessageParser.TYPE.ERROR);
+                                mp.setMsg("User not found:"+cr_id);
+                                send(mp.GenerateMsg());
+                            }
+                            break;
+                        case ID:
+                            break;
+                        case EXIT:
+                            close_session();
+                            event.exit(id);
+                            break;
+                        case P:
+                            break;
+                        case G:
+                            break;
+                        case G2A:
+                            break;
+                        case G3A:
+                            break;
+                        case G2B:
+                            break;
+                        case G3B:
+                            break;
+                        case PB:
+                            break;
+                        case QB:
+                            break;
+                        case PA:
+                            break;
+                        case QA:
+                            break;
+                        case RA:
+                            break;
+                        case RB:
+                            break;
+                        case ERROR:
+                            break;
+                        default:
+                            throw new AssertionError(mp.what().name());
+                    }
                 }else{
                     if(!msg_queue.isEmpty())
                     {
@@ -109,5 +188,13 @@ public class client_conn extends Thread {
         } catch (InterruptedException ex) {
             Logger.getLogger(client_conn.class.getName()).log(Level.SEVERE, null, ex);
         }
+    }
+    
+    public String get_name(){
+        return name;
+    }
+    
+    public String get_pub_key(){
+        return pub_key;
     }
 }
