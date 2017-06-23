@@ -95,8 +95,6 @@ public class Smp_client extends Thread{
             CB =    new CryptoBox();
             CB.setKey( DH.generateSecret() );
         }
-        String str = Base64.getEncoder().encodeToString(DH.generateSecret().getEncoded());
-        System.out.println("AES_KEY: " + str);
     }
     
     private void parse(String msg){
@@ -149,7 +147,7 @@ public class Smp_client extends Thread{
                 if(!checker)
                 {
                     byte[] encoded = Base64.getDecoder().decode(mp.getMsg());
-                    if(Base64.getEncoder().encodeToString(CB.decrypt(encoded)).compareTo("TEST")==0)
+                    if(new String(CB.decrypt(encoded)).compareTo("TEST")==0)
                         System.out.println("TEST PASSED");
                     else
                         System.out.println("TEST FAILED");
@@ -161,7 +159,7 @@ public class Smp_client extends Thread{
                     send(mp.GenerateMsg());
                 }else{
                     byte[] encoded = Base64.getDecoder().decode(mp.getMsg());
-                    if(Base64.getEncoder().encodeToString(CB.decrypt(encoded)).compareTo("TEST")==0)
+                    if(new String(CB.decrypt(encoded)).compareTo("TEST")==0)
                         System.out.println("TEST PASSED");
                     else
                         System.out.println("TEST FAILED");
@@ -258,6 +256,7 @@ public class Smp_client extends Thread{
             name = br.readLine();
              
             Smp_client ss = new Smp_client(port,"localhost",name);
+            ss.test();
             Thread t = new Thread(ss);
             t.start();
             String s;
@@ -278,4 +277,40 @@ public class Smp_client extends Thread{
            Logger.getLogger(Smp_client.class.getName()).log(Level.SEVERE, null, ex);
         }
    }  
+   
+    public void test()
+    {
+            DHCryptoBox aliceDH = new DHCryptoBox();
+            DHCryptoBox bobDH = new DHCryptoBox();
+
+            // Alicja generuje pare kluczy
+            aliceDH.createKeyPair( true );
+            // Alicja wysyla do Boba swoj klucz publiczny
+            byte[] apk = aliceDH.getPublicKey();
+            String str = Base64.getEncoder().encodeToString(aliceDH.getPublicKey());
+            apk = Base64.getDecoder().decode(str);
+            // Bob odbiera klucz publiczny Alicji i na jego podstawie generuje swoja pare kluczy
+            bobDH.setAdvPublicKey( apk );
+            bobDH.createKeyPair( false );
+            // Bob wysyla swoj klucz publiczny
+            byte[] bpk = bobDH.getPublicKey();
+            String str1 = Base64.getEncoder().encodeToString(bobDH.getPublicKey());
+            bpk = Base64.getDecoder().decode(str1);
+            // Alicja odbiera klucz publiczny Boba
+            aliceDH.setAdvPublicKey( bpk );
+
+            // Bob i Alicja moga wyliczyc klucze sesyjne (te same)
+            // i tym samym zakonczyc protokol DH
+            CryptoBox alice = new CryptoBox();
+            alice.setKey( aliceDH.generateSecret() );
+
+            CryptoBox bob = new CryptoBox();
+            bob.setKey( bobDH.generateSecret() );
+
+            // Alicja i Bob uzywaja klucza sesyjnego do szyfrowania i deszyfrowania danych
+            System.out.println( new String( bob.decrypt( alice.encrypt( "Hello, world!".getBytes() ) ) ) );
+            System.out.println( new String( bob.decrypt( alice.encrypt( "qwerty".getBytes() ) ) ) );
+            System.out.println( new String( alice.decrypt( bob.encrypt( "some, test.".getBytes() ) ) ) );
+    }
+    
 }

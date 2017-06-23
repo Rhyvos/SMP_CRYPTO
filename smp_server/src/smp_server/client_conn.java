@@ -100,6 +100,17 @@ public class client_conn extends Thread {
                                 send(mp.GenerateMsg());
                             }
                             break;
+                        case TEST_AES:
+                            String ta_name = mp.getReciver();
+                            int ta_id = event.find_user(ta_name);
+                            if(ta_id >= 0)
+                                event.send_to_user(ta_id, msg);
+                            else{
+                                mp.setType(MessageParser.TYPE.ERROR);
+                                mp.setMsg("User not found:"+ta_name);
+                                send(mp.GenerateMsg());
+                            }
+                            break;
                         case DH_PUBLIC_KEY:
                             String dh_name = mp.getReciver();
                             int dh_id = event.find_user(dh_name);
