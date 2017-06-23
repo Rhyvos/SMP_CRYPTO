@@ -285,7 +285,7 @@ public class Smp_client extends Thread{
             String gamma = B.get_gamma(halpha).toString();
             A.set_g(g);
             A.set_gamma(gamma);
-            A.set_x("3");
+            A.set_x("4");
             B.set_y("4");
             String pa = A.get_pa().toString();
             String pb = B.get_pb().toString();

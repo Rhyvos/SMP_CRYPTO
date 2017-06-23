@@ -137,7 +137,7 @@ public class SMP {
     } 
     
     boolean Test(){
-        return c.equals(pa.multiply(pb.mod(p)).mod(p));
+        return c.equals(pa.multiply(pb.modInverse(p)).mod(p));
     }
     
 }
