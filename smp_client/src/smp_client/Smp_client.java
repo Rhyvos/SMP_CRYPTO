@@ -16,11 +16,13 @@ import static java.lang.Thread.sleep;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
+import java.security.NoSuchAlgorithmException;
 import java.util.Base64;
 import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.crypto.Cipher;
 
 /**
  *
@@ -69,7 +71,6 @@ public class Smp_client extends Thread{
     private void send_pkey(){
         mp.setType(MessageParser.TYPE.PUBLIC_KEY);
         String str = Base64.getEncoder().encodeToString(DH.getPublicKey());
-        System.out.println("decodedKey: " + DH.getPublicKey().length);
         System.out.println(str);
         mp.setMsg(str);
         send(mp.GenerateMsg());
@@ -83,14 +84,12 @@ public class Smp_client extends Thread{
     private void gen_aes_key(){
         if(checker){
             byte[] decodedKey = Base64.getDecoder().decode(reciver_pub_key);
-            System.out.println("decodedKey: " + decodedKey.length);
             DH.setAdvPublicKey( decodedKey );
             CB =    new CryptoBox();
             CB.setKey( DH.generateSecret() );
         }else{
             DH = new DHCryptoBox();
             byte[] decodedKey = Base64.getDecoder().decode(reciver_pub_key);
-            System.out.println("decodedKey: " + decodedKey.length);
             DH.setAdvPublicKey( decodedKey );
             DH.createKeyPair( false );
             CB =    new CryptoBox();
@@ -141,7 +140,6 @@ public class Smp_client extends Thread{
                     mp.setReciver(mp.getSender());
                     mp.setSender(name);
                     String pkay = Base64.getEncoder().encodeToString(DH.getPublicKey());
-                    System.out.println("decodedKey: " + DH.getPublicKey().length);
                     mp.setMsg(pkay);
                     send(mp.GenerateMsg());
                 }  
@@ -262,7 +260,6 @@ public class Smp_client extends Thread{
             Smp_client ss = new Smp_client(port,"localhost",name);
             Thread t = new Thread(ss);
             t.start();
-            ss.test();
             String s;
             do{
                 s = br.readLine();
@@ -280,37 +277,5 @@ public class Smp_client extends Thread{
         }catch(IOException ex) {
            Logger.getLogger(Smp_client.class.getName()).log(Level.SEVERE, null, ex);
         }
-   }
-    
-    public void test()
-	{
-		DHCryptoBox aliceDH = new DHCryptoBox();
-		DHCryptoBox bobDH = new DHCryptoBox();
-		
-		// Alicja generuje pare kluczy
-		aliceDH.createKeyPair( true );
-		// Alicja wysyla do Boba swoj klucz publiczny
-		byte[] apk = aliceDH.getPublicKey();
-		// Bob odbiera klucz publiczny Alicji i na jego podstawie generuje swoja pare kluczy
-		bobDH.setAdvPublicKey( apk );
-		bobDH.createKeyPair( false );
-		// Bob wysyla swoj klucz publiczny
-		byte[] bpk = bobDH.getPublicKey();
-		// Alicja odbiera klucz publiczny Boba
-		aliceDH.setAdvPublicKey( bpk );
-		
-		// Bob i Alicja moga wyliczyc klucze sesyjne (te same)
-		// i tym samym zakonczyc protokol DH
-		CryptoBox alice = new CryptoBox();
-		alice.setKey( aliceDH.generateSecret() );
-		
-		CryptoBox bob = new CryptoBox();
-		bob.setKey( bobDH.generateSecret() );
-		
-		// Alicja i Bob uzywaja klucza sesyjnego do szyfrowania i deszyfrowania danych
-		System.out.println( new String( bob.decrypt( alice.encrypt( "Hello, world!".getBytes() ) ) ) );
-		System.out.println( new String( bob.decrypt( alice.encrypt( "qwerty".getBytes() ) ) ) );
-		System.out.println( new String( alice.decrypt( bob.encrypt( "some, test.".getBytes() ) ) ) );
-	}
-    
+   }  
 }
