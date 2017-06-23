@@ -41,9 +41,14 @@ public class Smp_client extends Thread{
     String reciver_pub_key;
     DHCryptoBox DH;
     CryptoBox CB;
+    SMP smp;
+    int coords;
+    boolean g_b = false;
+    boolean gamma_b = false;
     public boolean checker;
-    public Smp_client(int port, String adress, String name){
+    public Smp_client(int port, String adress, String name,int c){
         DH = new DHCryptoBox();
+        coords = c;
         DH.createKeyPair(true);
         msg_queue = new ArrayBlockingQueue<String>(10);
         open = true;
@@ -98,14 +103,16 @@ public class Smp_client extends Thread{
     }
     
     private void parse(String msg){
+        System.out.println("Parse: "+msg);
         mp.ParseMessage(msg);
+        String to;
         switch(mp.what())
         {
             case NAME:
                 break;
             case MESSAGE:
-                //String tmp_msg = decrypt(mp.getMsg());
-                parse(msg);
+                byte[] encoded_m = Base64.getDecoder().decode(mp.getMsg());
+                parse(new String(CB.decrypt(encoded_m)));
                 break;
             case MESSAGE_P:
                 //String tmp_msg = decrypt(mp.getMsg());
@@ -148,7 +155,11 @@ public class Smp_client extends Thread{
                 {
                     byte[] encoded = Base64.getDecoder().decode(mp.getMsg());
                     if(new String(CB.decrypt(encoded)).compareTo("TEST")==0)
+                    {
                         System.out.println("TEST PASSED");
+                        smp = new SMP(false);
+                        smp.set_y(""+coords);
+                    }
                     else
                         System.out.println("TEST FAILED");
                     mp.setType(MessageParser.TYPE.TEST_AES);
@@ -160,7 +171,14 @@ public class Smp_client extends Thread{
                 }else{
                     byte[] encoded = Base64.getDecoder().decode(mp.getMsg());
                     if(new String(CB.decrypt(encoded)).compareTo("TEST")==0)
+                    {
                         System.out.println("TEST PASSED");
+                        smp = new SMP(true);
+                        smp.set_x(""+coords);
+                        to = mp.getSender();
+                        send(Prepare_Encoded_Message(MessageParser.TYPE.HA, smp.get_ha().toString(),to));
+                        send(Prepare_Encoded_Message(MessageParser.TYPE.HALPHA, smp.get_halpha().toString(),to));
+                    }
                     else
                         System.out.println("TEST FAILED");
                 }
@@ -173,25 +191,71 @@ public class Smp_client extends Thread{
                 break;
             case EXIT:
                 break;
-            case G2A:
+            case HALPHA:
+                to = mp.getSender();
+                send(Prepare_Encoded_Message(MessageParser.TYPE.GAMMA, smp.get_gamma(mp.getMsg()).toString(),to));
                 break;
-            case G3A:
+            case HA:
+                to = mp.getSender();
+                send(Prepare_Encoded_Message(MessageParser.TYPE.G, smp.get_g(mp.getMsg()).toString(),to));
                 break;
-            case G2B:
+            case G:
+                to = mp.getSender();
+                smp.set_g(mp.getMsg());
+                g_b=true;
+                if(gamma_b){
+                    if(checker){
+                        send(Prepare_Encoded_Message(MessageParser.TYPE.PA, smp.get_pa().toString(),to));
+                        send(Prepare_Encoded_Message(MessageParser.TYPE.QA, smp.get_qa().toString(),to));
+                    }else{
+                        send(Prepare_Encoded_Message(MessageParser.TYPE.PB, smp.get_pb().toString(),to));
+                        send(Prepare_Encoded_Message(MessageParser.TYPE.QB, smp.get_qb().toString(),to));
+                    }
+                    g_b=false;
+                }
                 break;
-            case G3B:
+            case GAMMA:
+                to = mp.getSender();
+                smp.set_gamma(mp.getMsg());
+                gamma_b=true;
+                if(g_b){
+                    if(checker){
+                        send(Prepare_Encoded_Message(MessageParser.TYPE.PA, smp.get_pa().toString(),to));
+                        send(Prepare_Encoded_Message(MessageParser.TYPE.QA, smp.get_qa().toString(),to));
+                    }else{
+                        send(Prepare_Encoded_Message(MessageParser.TYPE.PB, smp.get_pb().toString(),to));
+                        send(Prepare_Encoded_Message(MessageParser.TYPE.QB, smp.get_qb().toString(),to));
+                    }
+                    gamma_b=false;
+                }
                 break;
             case PB:
+                smp.set_pb(mp.getMsg());
                 break;
             case QB:
+                to = mp.getSender();
+                smp.set_qb(mp.getMsg());
+                send(Prepare_Encoded_Message(MessageParser.TYPE.C1, smp.get_c1().toString(),to));
                 break;
             case PA:
+                smp.set_pa(mp.getMsg());
                 break;
             case QA:
+                smp.set_qa(mp.getMsg());
+                to = mp.getSender();
+                send(Prepare_Encoded_Message(MessageParser.TYPE.PB, smp.get_pb().toString(),to));
+                send(Prepare_Encoded_Message(MessageParser.TYPE.QB, smp.get_qb().toString(),to));
                 break;
-            case RA:
+            case C1:
+                to = mp.getSender();
+                send(Prepare_Encoded_Message(MessageParser.TYPE.C, smp.get_c(mp.getMsg()).toString(),to));
+                System.out.println("Are you near "+to+" :"+smp.Test());
                 break;
-            case RB:
+            case C:
+                to = mp.getSender();
+                smp.set_c(mp.getMsg());
+                System.out.println("Are you near "+to+" :"+smp.Test());
+                checker = false;
                 break;
             case ERROR:
                 System.out.println("Cant parse message:"+msg);
@@ -200,6 +264,17 @@ public class Smp_client extends Thread{
                 throw new AssertionError(mp.what().name());
         }
         
+    }
+    
+    public String Prepare_Encoded_Message(MessageParser.TYPE t, String msg, String reciv){
+        mp.setType(t);
+        mp.setMsg(msg);
+        String tmp = Base64.getEncoder().encodeToString(CB.encrypt(mp.GenerateMsg().getBytes()));
+        mp.setType(MessageParser.TYPE.MESSAGE);
+        mp.setReciver(reciv);
+        mp.setSender(name);
+        mp.setMsg(tmp);   
+        return mp.GenerateMsg();
     }
     
     
@@ -249,11 +324,14 @@ public class Smp_client extends Thread{
             int port = Integer.parseInt("33344");
             BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
             String name;
+            int coords;
             System.out.println("Select name");
             name = br.readLine();
+            System.out.println("Coordinates");
+            coords = Integer.parseInt(br.readLine());
              
-            Smp_client ss = new Smp_client(port,"localhost",name);
-            ss.test();
+            Smp_client ss = new Smp_client(port,"localhost",name,coords);
+            //ss.test();
             Thread t = new Thread(ss);
             t.start();
             String s;

@@ -150,30 +150,6 @@ public class client_conn extends Thread {
                             close_session();
                             event.exit(id);
                             break;
-                        case P:
-                            break;
-                        case G:
-                            break;
-                        case G2A:
-                            break;
-                        case G3A:
-                            break;
-                        case G2B:
-                            break;
-                        case G3B:
-                            break;
-                        case PB:
-                            break;
-                        case QB:
-                            break;
-                        case PA:
-                            break;
-                        case QA:
-                            break;
-                        case RA:
-                            break;
-                        case RB:
-                            break;
                         case ERROR:
                             break;
                         default:

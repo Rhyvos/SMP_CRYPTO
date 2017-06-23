@@ -22,18 +22,16 @@ public class MessageParser {
         EXIT("EXIT"),
         TEST_AES("TEST_AES"),
         CHECK_RANGE("CHECK_RANGE"),
-        P("P"),
         G("G"),
-        G2A("G2A"),
-        G3A("G3A"),
-        G2B("G2B"),
-        G3B("G3B"),
+        HALPHA("HALPHA"),
+        HA("HA"),
+        GAMMA("GAMMA"),
         PB("PB"),
         QB("QB"),
         PA("PA"),
         QA("QA"),
-        RA("RA"),
-        RB("RB"),
+        C1("C1"),
+        C("C"),
         ERROR("ERROR");
         private final String text;
         private TYPE(final String text) {
@@ -146,23 +144,17 @@ public class MessageParser {
                 case "CHECK_RANGE":
                     t = TYPE.CHECK_RANGE;
                     break;
-                case "P":
-                    t = TYPE.P;
-                    break;
                 case "G":
                     t = TYPE.G;
                     break;
-                case "G2A":
-                    t = TYPE.G2A;
+                case "HALPHA":
+                    t = TYPE.HALPHA;
                     break;
-                case "G3A":
-                    t = TYPE.G3A;
+                case "HA":
+                    t = TYPE.HA;
                     break;
-                case "G2B":
-                    t = TYPE.G2B;
-                    break;
-                case "G3B":
-                    t = TYPE.G3B;
+                case "GAMMA":
+                    t = TYPE.GAMMA;
                     break;
                 case "PA":
                     t = TYPE.PA;
@@ -176,11 +168,11 @@ public class MessageParser {
                 case "QB":
                     t = TYPE.QB;
                     break;
-                case "RA":
-                    t = TYPE.RA;
+                case "C1":
+                    t = TYPE.C1;
                     break;
-                case "RB":
-                    t = TYPE.RB;
+                case "C":
+                    t = TYPE.C;
                     break;
                 default:
                     t = TYPE.ERROR;
