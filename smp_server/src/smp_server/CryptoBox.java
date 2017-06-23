@@ -8,15 +8,19 @@ import javax.crypto.spec.*;
 import javax.crypto.interfaces.*;
 import com.sun.crypto.provider.SunJCE;
 
+import java.util.Arrays;
+
 public class CryptoBox
 {
 	SecretKey key;
+	SecretKeySpec keySpec;
 	
 	public CryptoBox(){}
 	
 	public void setKey( SecretKey key )
 	{
-		this.key= key;
+		this.key = key;
+		keySpec = new SecretKeySpec( Arrays.copyOf( key.getEncoded(), 16 ), "AES" );
 	}
 	
 	public byte[] encrypt( byte[] data )
@@ -31,7 +35,7 @@ public class CryptoBox
 			srandom.nextBytes( ivbytes );
 		
 			IvParameterSpec iv = new IvParameterSpec( ivbytes );
-			SecretKeySpec keySpec = new SecretKeySpec( key.getEncoded(), "AES" );
+			//SecretKeySpec keySpec = new SecretKeySpec( key.getEncoded(), "AES" );
 		
 			cipher.init( Cipher.ENCRYPT_MODE, keySpec, iv );
 		
@@ -65,7 +69,7 @@ public class CryptoBox
 			System.arraycopy( data, ivsize, enc, 0, enc.length );
 		
 			IvParameterSpec iv = new IvParameterSpec( ivbytes );
-			SecretKeySpec keySpec = new SecretKeySpec( key.getEncoded(), "AES" );
+			//SecretKeySpec keySpec = new SecretKeySpec( key.getEncoded(), "AES" );
 		
 			cipher.init( Cipher.DECRYPT_MODE, keySpec, iv );
 		
