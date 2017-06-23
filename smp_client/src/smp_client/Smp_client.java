@@ -173,14 +173,6 @@ public class Smp_client extends Thread{
                 break;
             case EXIT:
                 break;
-            case P:
-                int p = Integer.parseInt(mp.getMsg());
-                System.out.println("P set to "+id);
-                break;
-            case G:
-                int g = Integer.parseInt(mp.getMsg());
-                System.out.println("G set to "+id);
-                break;
             case G2A:
                 break;
             case G3A:
@@ -215,24 +207,29 @@ public class Smp_client extends Thread{
         while(open)
         {
             try {
-                if(in.available()>0){
-                    String msg = in.readUTF();
-                    System.out.println("from Server:"+msg);
-                    parse(msg);
-                }else{
-                    if(!msg_queue.isEmpty())
-                    {
-                        String msg = "";
-                        try {
-                            msg = msg_queue.take();
-                        } catch (InterruptedException ex) {
-                            Logger.getLogger(Smp_client.class.getName()).log(Level.SEVERE, null, ex);
+                sleep(100);
+                try {
+                    if(in.available()>0){
+                        String msg = in.readUTF();
+                        System.out.println("from Server:"+msg);
+                        parse(msg);
+                    }else{
+                        if(!msg_queue.isEmpty())
+                        {
+                            String msg = "";
+                            try {
+                                msg = msg_queue.take();
+                            } catch (InterruptedException ex) {
+                                Logger.getLogger(Smp_client.class.getName()).log(Level.SEVERE, null, ex);
+                            }
+                            System.out.println("to Server: "+msg);
+                            out.writeUTF(msg);
                         }
-                        System.out.println("to Server: "+msg);
-                        out.writeUTF(msg);
                     }
+                } catch (IOException ex) {
+                    Logger.getLogger(Smp_client.class.getName()).log(Level.SEVERE, null, ex);
                 }
-            } catch (IOException ex) {
+            } catch (InterruptedException ex) {
                 Logger.getLogger(Smp_client.class.getName()).log(Level.SEVERE, null, ex);
             }
         }   
@@ -280,37 +277,29 @@ public class Smp_client extends Thread{
    
     public void test()
     {
-            DHCryptoBox aliceDH = new DHCryptoBox();
-            DHCryptoBox bobDH = new DHCryptoBox();
-
-            // Alicja generuje pare kluczy
-            aliceDH.createKeyPair( true );
-            // Alicja wysyla do Boba swoj klucz publiczny
-            byte[] apk = aliceDH.getPublicKey();
-            String str = Base64.getEncoder().encodeToString(aliceDH.getPublicKey());
-            apk = Base64.getDecoder().decode(str);
-            // Bob odbiera klucz publiczny Alicji i na jego podstawie generuje swoja pare kluczy
-            bobDH.setAdvPublicKey( apk );
-            bobDH.createKeyPair( false );
-            // Bob wysyla swoj klucz publiczny
-            byte[] bpk = bobDH.getPublicKey();
-            String str1 = Base64.getEncoder().encodeToString(bobDH.getPublicKey());
-            bpk = Base64.getDecoder().decode(str1);
-            // Alicja odbiera klucz publiczny Boba
-            aliceDH.setAdvPublicKey( bpk );
-
-            // Bob i Alicja moga wyliczyc klucze sesyjne (te same)
-            // i tym samym zakonczyc protokol DH
-            CryptoBox alice = new CryptoBox();
-            alice.setKey( aliceDH.generateSecret() );
-
-            CryptoBox bob = new CryptoBox();
-            bob.setKey( bobDH.generateSecret() );
-
-            // Alicja i Bob uzywaja klucza sesyjnego do szyfrowania i deszyfrowania danych
-            System.out.println( new String( bob.decrypt( alice.encrypt( "Hello, world!".getBytes() ) ) ) );
-            System.out.println( new String( bob.decrypt( alice.encrypt( "qwerty".getBytes() ) ) ) );
-            System.out.println( new String( alice.decrypt( bob.encrypt( "some, test.".getBytes() ) ) ) );
+            SMP A = new SMP(true);
+            SMP B = new SMP(false);
+            String ha = A.get_ha().toString();
+            String halpha = A.get_halpha().toString();
+            String g = B.get_g(ha).toString();
+            String gamma = B.get_gamma(halpha).toString();
+            A.set_g(g);
+            A.set_gamma(gamma);
+            A.set_x("3");
+            B.set_y("4");
+            String pa = A.get_pa().toString();
+            String pb = B.get_pb().toString();
+            String qa = A.get_qa().toString();
+            String qb = B.get_qb().toString();
+            A.set_pb(pb);
+            B.set_pa(pa);
+            A.set_qb(qb);
+            B.set_qa(qa);
+            String c1 = A.get_c1().toString();
+            String c = B.get_c(c1).toString();
+            A.set_c(c);
+            System.out.println("TEST A:"+A.Test());
+            System.out.println("TEST B:"+B.Test());
     }
     
 }

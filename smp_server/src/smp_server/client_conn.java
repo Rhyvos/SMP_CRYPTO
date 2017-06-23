@@ -74,6 +74,7 @@ public class client_conn extends Thread {
         {
             while(open)
             {
+                sleep(100);
                 //System.out.println("isClosed:"+s.isClosed()+" isConnected"+s.isConnected());
                 if(s.isClosed() || (!s.isConnected()))
                 {
@@ -203,6 +204,8 @@ public class client_conn extends Thread {
             //e.printStackTrace();
             close_session();
             event.exit(id);
+        } catch (InterruptedException ex) {
+            Logger.getLogger(client_conn.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
     synchronized public void send(String s){
